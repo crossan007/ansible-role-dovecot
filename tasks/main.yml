@@ -13,6 +13,7 @@
   group:
     name: vmail
     gid: 5000
+    state: present
 
 - name: Configure VMail user
   user:
@@ -21,31 +22,36 @@
     uid: 5000
     group: vmail
     home: /var/mail/vmail
+    state: present
+
+- name: Ensure mail domain directories are in place
+  file: 
+    state: directory
+    path: /var/mail/vmail/{{ item }} 
+    owner: vmail
+    group: vmail 
+    mode: 0770
+  with_items: '{{ mail_virtual_domains }}'
 
 - name: Dovecot config files
-  template: src={{item.src}} dest={{item.dest}}
-  with_items:
-    - {src: 'templates/dovecot.conf.j2', dest: '/etc/dovecot/dovecot.conf'}
-    - {src: 'templates/conf.d/10-auth.conf.j2', dest: '/etc/dovecot/conf.d/10-auth.conf'}
-    - {src: 'templates/conf.d/10-director.conf.j2', dest: '/etc/dovecot/conf.d/10-director.conf'}
-    - {src: 'templates/conf.d/10-logging.conf.j2', dest: '/etc/dovecot/conf.d/10-logging.conf'}
-    - {src: 'templates/conf.d/10-mail.conf.j2', dest: '/etc/dovecot/conf.d/10-mail.conf'}
-    - {src: 'templates/conf.d/10-master.conf.j2', dest: '/etc/dovecot/conf.d/10-master.conf'}
-    - {src: 'templates/conf.d/10-ssl.conf.j2', dest: '/etc/dovecot/conf.d/10-ssl.conf'}
-    - {src: 'templates/conf.d/10-tcpwrapper.conf.j2', dest: '/etc/dovecot/conf.d/10-tcpwrapper.conf'}
-    - {src: 'templates/conf.d/15-lda.conf.j2', dest: '/etc/dovecot/conf.d/15-lda.conf'}
-    - {src: 'templates/conf.d/15-mailboxes.conf.j2', dest: '/etc/dovecot/conf.d/15-mailboxes.conf'}
-    - {src: 'templates/conf.d/20-imap.conf.j2', dest: '/etc/dovecot/conf.d/20-imap.conf'}
-    - {src: 'templates/conf.d/90-acl.conf.j2', dest: '/etc/dovecot/conf.d/90-acl.conf'}
-    - {src: 'templates/conf.d/90-plugin.conf.j2', dest: '/etc/dovecot/conf.d/90-plugin.conf'}
-    - {src: 'templates/conf.d/90-quota.conf.j2', dest: '/etc/dovecot/conf.d/90-quota.conf'}
-    - {src: 'templates/conf.d/auth-checkpassword.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-checkpassword.conf.ext'}
-    - {src: 'templates/conf.d/auth-deny.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-deny.conf.ext'}
-    - {src: 'templates/conf.d/auth-dict.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-dict.conf.ext'}
-    - {src: 'templates/conf.d/auth-master.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-master.conf.ext'}
-    - {src: 'templates/conf.d/auth-passwdfile.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-passwdfile.conf.ext'}
-    - {src: 'templates/conf.d/auth-sql.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-sql.conf.ext'}
-    - {src: 'templates/conf.d/auth-static.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-static.conf.ext'}
-    - {src: 'templates/conf.d/auth-system.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-system.conf.ext'}
-    - {src: 'templates/conf.d/auth-vpopmail.conf.ext.j2', dest: '/etc/dovecot/conf.d/auth-vpopmail.conf.ext'}
+  template:
+      src: 'templates/dovecot.conf.j2'
+      dest: '/etc/dovecot/dovecot.conf'
+      owner: 'root'
+      group: 'root'
+      mode: '0644'
   notify: ['Restart dovecot']
+
+- name: Cleanup Dovecot configs
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob:
+    - "/etc/dovecot/conf.d*"
+
+- name: Set firewall rules for dovecot
+  ufw: rule=allow port={{ item }} proto=tcp
+  with_items:
+    - imaps
+    - pop3s
+  tags: ufw
