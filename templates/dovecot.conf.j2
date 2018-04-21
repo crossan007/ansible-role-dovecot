@@ -1,5 +1,5 @@
 
-postmaster_address = postmaster@{{mail_my_desination}}
+postmaster_address = postmaster@{{mail_my_domain}}
 hostname = {{ mail_hostname }}
 
 protocols = imap lmtp sieve pop3
@@ -86,7 +86,7 @@ protocol lda {
 
 protocol lmtp {
   mail_plugins = sieve
-  postmaster_address = postmaster@{{mail_my_desination}}
+  postmaster_address = postmaster@{{mail_my_domain}}
 }
 
 
