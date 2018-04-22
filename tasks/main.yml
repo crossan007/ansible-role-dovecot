@@ -42,6 +42,15 @@
       mode: '0644'
   notify: ['Restart dovecot']
 
+- name: Dovecot passwd file
+  template:
+      src: 'templates/passwd.j2'
+      dest: '/etc/dovecot/passwd'
+      owner: 'root'
+      group: 'root'
+      mode: '0644'
+  notify: ['Restart dovecot']
+
 - name: Cleanup Dovecot configs
   file:
     path: "{{ item }}"

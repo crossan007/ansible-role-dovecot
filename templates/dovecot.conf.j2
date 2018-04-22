@@ -50,11 +50,13 @@ namespace inbox {
 }
 
 userdb {
-  driver = passwd
+  args = uid=vmail gid=vmail home=/var/mail/vmail/%d/%n
+  driver = static
 }
 
 passdb {
-  driver = pam
+  driver = passwd-file
+  args = /etc/dovecot/passwd
 }
 
 service auth {
@@ -68,14 +70,12 @@ service auth {
 # https://wiki.dovecot.org/LMTP
 service lmtp {
   unix_listener /var/spool/postfix/private/dovecot-lmtp {
+    group = vmail
     mode = 0666
-    group = postfix
-    user = postfix
+    user = vmail
   }
   user = vmail
 }
-
-
 
 protocol lda {
   deliver_log_format = msgid=%m: %$
