@@ -24,14 +24,23 @@
     home: /var/mail/vmail
     state: present
 
+- name: Configure doveauth user
+  user:
+    name: doveauth
+    comment: Authentication user for Dovecot
+    uid: 5002
+    group: dovecot
+    home:
+    state: present
+ 
+
 - name: Ensure mail domain directories are in place
   file: 
     state: directory
-    path: /var/mail/vmail/{{ item }} 
+    path: /var/mail/vmail
     owner: vmail
     group: vmail 
-    mode: 0770
-  with_items: '{{ mail_virtual_domains }}'
+    mode: 0777
 
 - name: Dovecot config files
   template:

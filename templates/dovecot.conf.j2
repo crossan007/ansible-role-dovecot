@@ -1,8 +1,9 @@
+log_path = /var/log/dovecot.log
 
 postmaster_address = postmaster@{{mail_my_domain}}
 hostname = {{ mail_hostname }}
 
-protocols = imap lmtp sieve pop3
+protocols = imap lmtp sieve
 
 auth_verbose = yes
 mail_home = /var/mail/vmail/%d/%n
@@ -59,34 +60,39 @@ passdb {
   args = /etc/dovecot/passwd
 }
 
-service auth {
-  unix_listener /var/spool/postfix/private/dovecot-auth {
-    group = vmail
-    mode = 0666
-    user = vmail
-  }
-}
+
 
 # https://wiki.dovecot.org/LMTP
 service lmtp {
-  unix_listener /var/spool/postfix/private/dovecot-lmtp {
-    group = vmail
-    mode = 0666
-    user = vmail
+    unix_listener /var/spool/postfix/private/dovecot-lmtp {
+    group = postfix
+    mode = 0660
+    user = postfix
   }
-  user = vmail
 }
 
-protocol lda {
-  deliver_log_format = msgid=%m: %$
-  mail_plugins = sieve
-  quota_full_tempfail = yes
-  rejection_reason = Your message to <%t> was automatically rejected:%n%r
+service imap {
+}
+
+service auth {
+  unix_listener /var/spool/postfix/private/auth {
+    group = postfix
+    mode = 0660
+    user = postfix
+  }
+  user = doveauth
+}
+
+service auth-worker {
+ user = doveauth
 }
 
 protocol lmtp {
   mail_plugins = sieve
   postmaster_address = postmaster@{{mail_my_domain}}
+  deliver_log_format = msgid=%m: %$
+  quota_full_tempfail = yes
+  rejection_reason = Your message to <%t> was automatically rejected:%n%r
 }
 
 
@@ -110,3 +116,5 @@ plugin {
   sieve = ~/.dovecot.sieve
   sieve_dir = ~/sieve
 }
+
+verbose_proctitle = yes
