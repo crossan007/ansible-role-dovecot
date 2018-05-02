@@ -1,8 +1,0 @@
-{% if mail_users %}
-{% for a in mail_users %}
-{% for user,password in a.items() %}
-{{user}}:{PLAIN}{{password}}::::::
-{% endfor %}
-{% endfor %}
-{% endif %}
-

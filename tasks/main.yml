@@ -51,10 +51,10 @@
       mode: '0644'
   notify: ['Restart dovecot']
 
-- name: Dovecot passwd file
+- name: Dovecot auth config files
   template:
-      src: 'templates/passwd.j2'
-      dest: '/etc/dovecot/passwd'
+      src: 'templates/dovecot-sql.conf.ext.j2'
+      dest: '/etc/dovecot/dovecot-sql.conf.ext'
       owner: 'root'
       group: 'root'
       mode: '0644'

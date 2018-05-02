@@ -1,21 +1,14 @@
-log_path = /var/log/dovecot.log
-
-postmaster_address = postmaster@{{mail_my_domain}}
-hostname = {{ mail_hostname }}
-
-protocols = imap lmtp sieve
-
 auth_verbose = yes
+default_internal_user = vmail
+disable_plaintext_auth = no
+first_valid_uid = 0
+hostname = {{ mail_hostname }}
+log_path = /var/log/dovecot.log
 mail_home = /var/mail/vmail/%d/%n
 mail_location = maildir:/var/mail/vmail/%d/%n/mail:LAYOUT=fs
-
 mail_privileged_group = vmail
-default_internal_user = vmail
-first_valid_uid = 0
-
-ssl = yes
-disable_plaintext_auth = no
-auth_mechanisms = plain login
+managesieve_notify_capability = mailto
+managesieve_sieve_capability = fileinto reject envelope encoded-character vacation subaddress comparator-i;ascii-numeric relational regex imap4flags copy include variables body enotify environment mailbox date index ihave duplicate mime foreverypart extracttext
 
 ssl_ca = <{{ssl_ca_file}}
 ssl_cert = <{{ssl_cert_file}}
@@ -24,10 +17,11 @@ ssl_dh_parameters_length = 2048
 ssl_key = <{{ssl_key_file}}
 ssl_prefer_server_ciphers = yes
 ssl_protocols = !SSLv2 !SSLv3
+verbose_proctitle = yes
 
 namespace inbox {
   inbox = yes
-  location = 
+  location =
   mailbox Drafts {
     auto = subscribe
     special_use = \Drafts
@@ -40,51 +34,44 @@ namespace inbox {
     auto = subscribe
     special_use = \Sent
   }
-  mailbox "Sent Messages" {
-    auto = subscribe
-    special_use = \Sent
-  }
   mailbox Trash {
     auto = subscribe
     special_use = \Trash
   }
+  prefix =
 }
-
 userdb {
   args = uid=vmail gid=vmail home=/var/mail/vmail/%d/%n
   driver = static
 }
-
 passdb {
-  driver = passwd-file
-  args = /etc/dovecot/passwd
+  args = /etc/dovecot/dovecot-sql.conf.ext
+  driver = sql
 }
 
+postmaster_address = postmaster@{{mail_my_domain}}
+protocols = imap lmtp sieve
+#service auth {
+#  unix_listener /var/spool/postfix/private/auth {
+#    group = postfix
+#    mode = 0660
+#    user = postfix
+#  }
+ 
+#unix_listener auth-master {
+#    group = mail
+#    mode = 0660
+#    user = vmail
+#  }
+#  user = nobody
+#}
 
-
-# https://wiki.dovecot.org/LMTP
 service lmtp {
-    unix_listener /var/spool/postfix/private/dovecot-lmtp {
+  unix_listener /var/spool/postfix/private/dovecot-lmtp {
     group = postfix
     mode = 0660
     user = postfix
   }
-}
-
-service imap {
-}
-
-service auth {
-  unix_listener /var/spool/postfix/private/auth {
-    group = postfix
-    mode = 0660
-    user = postfix
-  }
-  user = doveauth
-}
-
-service auth-worker {
- user = doveauth
 }
 
 protocol lmtp {
@@ -103,18 +90,13 @@ protocol imap {
 
 
 plugin {
-    antispam_backend = pipe
-    antispam_spam    = Junk
-    antispam_trash   = Trash
-    antispam_mail_sendmail = /usr/bin/rspamc
-    antispam_mail_spam     = learn_spam
-    antispam_mail_notspam  = learn_ham
-    antispam_mail_sendmail_args = -h;localhost:11334
-}
-
-plugin {
+  antispam_backend = pipe
+  antispam_mail_notspam = learn_ham
+  antispam_mail_sendmail = /usr/bin/rspamc
+  antispam_mail_sendmail_args = -h;localhost:11334
+  antispam_mail_spam = learn_spam
+  antispam_spam = Junk
+  antispam_trash = Trash
   sieve = ~/.dovecot.sieve
   sieve_dir = ~/sieve
 }
-
-verbose_proctitle = yes
